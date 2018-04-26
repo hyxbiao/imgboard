@@ -15,11 +15,11 @@
         <Layout>
             <Header>
                 <ButtonGroup>
-                    <Button type="primary">
+                    <Button type="primary" @click="prev" :disabled="page===0">
                         <Icon type="chevron-left"></Icon>
                         Prev
                     </Button>
-                    <Button type="primary">
+                    <Button type="primary" @click="next">
                         Next
                         <Icon type="chevron-right"></Icon>
                     </Button>
@@ -28,8 +28,8 @@
             </Header>
             <Content>
 				<Row>
-                    <Col span="8" v-for="item in items">
-                        <ImageCard v-bind:detail='item'></ImageCard>
+                    <Col span="8" v-for="item in items" :key="item.image">
+                        <ImageCard v-on:predict="predict" :detail="item" :ref="item.id"></ImageCard>
                     </Col>
 				</Row>
             </Content>
@@ -38,16 +38,18 @@
     </div>
 </template>
 <script>
-    import Socket from '@/base/js/socket'
-    import ImageCard from '@/components/ImageCard'
+    //import ImageCard from '@/components/ImageCard'
     export default {
         components: {
-            ImageCard,
+            //ImageCard,
+            ImageCard: () => import('@/components/ImageCard')
         },
         data () {
             return {
-                socket: '',
+                page: 0,
+                size: 9,
                 items: [{
+                    id: 1,
                     title: 'Image hello',
                     source: 'image source ~~~~~~!!',
                     image: 'xxxxxxx',
@@ -55,6 +57,7 @@
                         label: 1
                     }
                 }, {
+                    id: 2,
                     title: 'Image hello',
                     source: 'image source ~~~~~~!!',
                     image: 'xxxxxxx2222',
@@ -62,16 +65,18 @@
                         label: 1
                     }
                 }, {
+                    id: 3,
                     title: 'Image hello',
                     source: 'image source ~~~~~~!!',
-                    image: 'xxxxxxx2222',
+                    image: 'xxxxxxx3322',
                     attr: {
                         label: 1
                     }
                 }, {
+                    id: 4,
                     title: 'Image hello',
                     source: 'image source ~~~~~~!!',
-                    image: 'xxxxxxx2222',
+                    image: 'xxxxxxx4522',
                     attr: {
                         label: 1
                     }
@@ -79,17 +84,38 @@
                 ],
             }
         },
-        mounted () {
-            this.socket = new Socket('ws:localhost:8100');
-            this.socket.connect(() => {
-                this.socket.onMessage((data) => {
-                    console.log(data)
-                    this.onMessage(data);
+        methods: {
+            getdataset () {
+                this.$http.get('/dataset', {params: {page: this.page, size: this.size}}).then(response => {
+
+                    console.log(response.body);
+                    // get body data
+                    this.items = response.body.data;
+                }, response => {
+                    // error callback
+                    console.log(response);
                 });
-            });
+            },
+            prev () {
+                this.page -= 1
+                this.getdataset()
+            },
+            next () {
+                //const id = 3;
+                //console.log(this.$refs[id][0].detail);
+                this.page += 1
+                this.getdataset()
+            },
+            predict (detail) {
+                this.page += 1
+                this.getdataset()
+                console.log(detail);
+            }
+        },
+        mounted () {
+            this.getdataset()
         },
         destroyed() {
-            this.socket && this.socket.close();
         },
         onMessage(data) {
         },
