@@ -9,11 +9,32 @@
 .layout-footer-center{
     text-align: center;
 }
+.popwin{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .ivu-modal {
+        top: 0;
+    }
+}
+.image {
+    height: auto; 
+    width: auto; 
+    max-height: 480px;
+    margin: 5px;
+    display: inline-block;
+}
 </style>
 <template>
     <div class="layout">
         <Layout>
             <Header>
+				<RadioGroup v-model="dataset" type="button" @on-change="changedataset">
+					<Radio label="Train"></Radio>
+					<Radio label="Test"></Radio>
+					<Radio label="Predict"></Radio>
+				</RadioGroup>
                 <ButtonGroup>
                     <Button type="primary" @click="prev" :disabled="page===0">
                         <Icon type="chevron-left"></Icon>
@@ -28,13 +49,43 @@
             </Header>
             <Content>
 				<Row>
-                    <Col span="8" v-for="item in items" :key="item.image">
-                        <ImageCard v-on:predict="predict" :detail="item" :ref="item.id"></ImageCard>
+                    <Col span="8" v-for="(item, index) in items" :key="item.image">
+                        <ImageCard v-on:show="show" :detail="item" :index="index" :ref="item.id"></ImageCard>
                     </Col>
 				</Row>
             </Content>
             <Footer class="layout-footer-center"></Footer>
         </Layout>
+        <Modal
+            :title="items[popindex].title"
+            v-model="popwin"
+            width="80%"
+            :styles="{top: '20px'}"
+            class-name="popwin">
+            <Carousel 
+                v-model="popindex"
+                v-if="popwin"
+                dots="outside">
+                <CarouselItem v-for="(item, index) in items" :key="index">
+                    <Row>
+                        <Col span="12">
+                            <img :src="item.image" class="image" :key="item.image">
+                        </Col>
+                        <Col span="12">
+                            <p>
+                                result
+                            </p>
+                            <img :src="transform(item, 'topleft')" class="image" :key="item.id">
+                            <img :src="transform(item, 'topright')" class="image" :key="item.id">
+                            <img :src="transform(item, 'bottomleft')" class="image" :key="item.id">
+                            <img :src="transform(item, 'bottomright')" class="image" :key="item.id">
+                        </Col>
+                    </Row>
+                </CarouselItem>
+            </Carousel>
+            <div slot="footer">
+            </div>
+        </Modal>
     </div>
 </template>
 <script>
@@ -46,55 +97,40 @@
         },
         data () {
             return {
+                popwin: false,
+                popindex: 0,
                 page: 0,
                 size: 9,
-                items: [{
-                    id: 1,
-                    title: 'Image hello',
-                    source: 'image source ~~~~~~!!',
-                    image: 'xxxxxxx',
-                    attr: {
-                        label: 1
-                    }
-                }, {
-                    id: 2,
-                    title: 'Image hello',
-                    source: 'image source ~~~~~~!!',
-                    image: 'xxxxxxx2222',
-                    attr: {
-                        label: 1
-                    }
-                }, {
-                    id: 3,
-                    title: 'Image hello',
-                    source: 'image source ~~~~~~!!',
-                    image: 'xxxxxxx3322',
-                    attr: {
-                        label: 1
-                    }
-                }, {
-                    id: 4,
-                    title: 'Image hello',
-                    source: 'image source ~~~~~~!!',
-                    image: 'xxxxxxx4522',
-                    attr: {
-                        label: 1
-                    }
-                },
+                dataset: 'Train',
+                items: [
                 ],
             }
         },
+        computed: {
+        },
         methods: {
             getdataset () {
-                this.$http.get('/dataset', {params: {page: this.page, size: this.size}}).then(response => {
+                const params = {
+                    dataset: this.dataset.toLowerCase(),
+                    page: this.page,
+                    size: this.size,
+                }
+                this.$http.get('/dataset/index', {params: params}).then(response => {
 
-                    console.log(response.body);
+                    console.log(response.body.data);
                     // get body data
                     this.items = response.body.data;
                 }, response => {
                     // error callback
                     console.log(response);
                 });
+            },
+            transform (item, method) {
+                return '/dataset/data?dataset=' + this.dataset.toLowerCase() + '&index=' + item.id + '&method=' + method
+            },
+            changedataset(select) {
+                console.log(select)
+                this.getdataset()
             },
             prev () {
                 this.page -= 1
@@ -106,10 +142,13 @@
                 this.page += 1
                 this.getdataset()
             },
+            show (payload) {
+                this.popindex = payload.index
+                this.popwin = true
+            },
             predict (detail) {
                 this.page += 1
                 this.getdataset()
-                console.log(detail);
             }
         },
         mounted () {

@@ -4,7 +4,6 @@
     text-align: left;
 }
 .image {
-    //width: calc(60% - 10px);
     height: auto; 
     width: auto; 
     max-width: 300px; 
@@ -24,30 +23,30 @@
             <Icon type="ios-loop-strong"></Icon>
             Predict
         </a>
-        <Row>
-            <Col span="16">
-                <img :src="detail.image" class="image" :key="detail.image">
-            </Col>
-            <Col span="8">
-                <ul>
-                    <li v-for="(value, key) in detail.attr">
-                        {{ key }}
-                        <span>{{ value }}</span>
-                    </li>
-                </ul>
-            </Col>
-        </Row>
+        <div>
+            <img :src="detail.image" class="image" :key="detail.image" @click="show">
+        </div>
+        <div>
+            <Tag v-for="(value, key, index) in detail.attr" :color="colors[index%4]" :key="key">
+                {{ key }}: {{ value }}
+            </Tag>
+        </div>
     </Card>
 </template>
 <script>
     export default {
-        props: ['detail'],
+        props: ['index', 'detail'],
         data () {
             return {
+                index: this.index,
                 detail: this.detail,
+                colors: ['blue', 'green', 'red', 'yello'],
             }
         },
         methods: {
+            show () {
+                this.$emit('show', { index: this.index })
+            },
             predict () {
                 //this.$emit('predict', { detail: this.detail })
             }
