@@ -101,7 +101,7 @@
                 popindex: 0,
                 page: 0,
                 size: 9,
-                dataset: 'Train',
+                dataset: 'Predict',
                 items: [
                 ],
             }
@@ -109,21 +109,44 @@
         computed: {
         },
         methods: {
-            getdataset () {
+            getrawdataset (predict) {
                 const params = {
                     dataset: this.dataset.toLowerCase(),
                     page: this.page,
                     size: this.size,
+                    predict: predict ? 1 : 0,
                 }
-                this.$http.get('/dataset/index', {params: params}).then(response => {
+                return new Promise((resolve, reject) => {
+                this.$http.get('/dataset/index', {
+                    params: params,
+                    // use before callback
+                    before(request) {
+
+                      // abort previous request, if exists
+                      if (!predict && this.previousRequest) {
+                        this.previousRequest.abort();
+                      }
+
+                      // set previous request on Vue instance
+                      this.previousRequest = request;
+                    }
+
+                }).then(response => {
 
                     console.log(response.body.data);
                     // get body data
                     this.items = response.body.data;
+                    resolve();
                 }, response => {
                     // error callback
                     console.log(response);
+                    reject();
                 });
+                })
+            },
+            getdataset () {
+                this.getrawdataset(false)
+                .then(this.getrawdataset(true))
             },
             transform (item, method) {
                 return '/dataset/data?dataset=' + this.dataset.toLowerCase() + '&index=' + item.id + '&method=' + method

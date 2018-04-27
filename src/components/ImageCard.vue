@@ -31,6 +31,9 @@
                 {{ key }}: {{ value }}
             </Tag>
         </div>
+        <div v-if="detail.predict">
+            <Progress v-for="(prob, index) in detail.predict.probs" :percent="percent(prob)" :key="index" :status="status(index)"></Progress>
+        </div>
     </Card>
 </template>
 <script>
@@ -43,7 +46,17 @@
                 colors: ['blue', 'green', 'red', 'yello'],
             }
         },
+        computed: {
+        },
         methods: {
+            status (index) {
+                return this.detail.attr.label!='?' && index==this.detail.predict.pred 
+                    ? (index==this.detail.attr.label ? 'success' : 'wrong') 
+                    : 'normal'
+            },
+            percent (prob) {
+                return (prob*100).toFixed(2)
+            },
             show () {
                 this.$emit('show', { index: this.index })
             },
